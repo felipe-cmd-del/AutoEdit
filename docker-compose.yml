@@ -1,0 +1,10 @@
+services:
+  broll:
+    build: .
+    container_name: broll-hunter
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${PORT:-8090}:8000"
+    volumes:
+      - ./data:/data
