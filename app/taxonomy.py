@@ -4,7 +4,10 @@ Estrutura: TEMA -> SUBCATEGORIA -> lista de buscas (em inglês, que retorna
 muito mais B-roll de qualidade). Para adicionar temas, edite este arquivo.
 Cada clipe baixado é categorizado pela subcategoria cuja busca o encontrou.
 """
-import unicodedata
+import json, os, unicodedata
+from pathlib import Path
+
+CUSTOM = Path(os.getenv("DATA_DIR", "/data")) / "themes_custom.json"
 
 TAXONOMY = {
     "diabetes": {
@@ -130,7 +133,26 @@ TAXONOMY = {
     },
 }
 
-GENERIC_SUFFIX = " b roll"
+
+
+def all_themes():
+    """Taxonomia base + temas criados pelo app (data/themes_custom.json)."""
+    t = dict(TAXONOMY)
+    try:
+        t.update(json.loads(CUSTOM.read_text()))
+    except Exception:
+        pass
+    return t
+
+
+def save_custom(name, aliases, subs):
+    try:
+        c = json.loads(CUSTOM.read_text())
+    except Exception:
+        c = {}
+    c[normalize(name).replace(" ", "_")] = {"aliases": aliases, "subs": subs}
+    CUSTOM.parent.mkdir(parents=True, exist_ok=True)
+    CUSTOM.write_text(json.dumps(c, ensure_ascii=False, indent=1))
 
 
 def normalize(text: str) -> str:
@@ -141,11 +163,11 @@ def normalize(text: str) -> str:
 def resolve_theme(user_text: str):
     """Retorna (tema, subs). Se não reconhecer, cria um tema livre."""
     q = normalize(user_text)
-    for theme, data in TAXONOMY.items():
+    for theme, data in all_themes().items():
         names = [normalize(theme)] + [normalize(a) for a in data["aliases"]]
         if q in names:
             return theme, data["subs"]
-    for theme, data in TAXONOMY.items():
+    for theme, data in all_themes().items():
         names = [normalize(theme)] + [normalize(a) for a in data["aliases"]]
         if any(n in q or q in n for n in names):
             return theme, data["subs"]

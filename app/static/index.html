@@ -2,37 +2,94 @@
 <html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>B-Roll Hunter</title>
-<link rel="manifest" href="/static/manifest.json"><meta name="theme-color" content="#111827">
+<link rel="manifest" href="/static/manifest.json"><meta name="theme-color" content="#0f172a">
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--tx:#e2e8f0;--mut:#94a3b8;--ac:#22c55e}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;padding:16px;max-width:720px;margin:auto}
-h1{font-size:22px}.card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px}
-input,textarea,button{width:100%;font:inherit;padding:12px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:var(--tx);margin-top:8px}
-button{background:var(--ac);color:#052e16;font-weight:700;border:0}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{background:#334155;padding:6px 10px;border-radius:99px;font-size:14px;cursor:pointer}
-pre{white-space:pre-wrap;font-size:12px;color:var(--mut);max-height:260px;overflow:auto}
-small{color:var(--mut)}table{width:100%;font-size:14px;border-collapse:collapse}td{padding:4px;border-bottom:1px solid #334155}
+:root{--bg:#0f172a;--card:#1e293b;--tx:#e2e8f0;--mut:#94a3b8;--ac:#22c55e;--bd:#334155}
+*{box-sizing:border-box}body{margin:0 auto;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;padding:16px;max-width:960px}
+h1{font-size:22px;margin:0 0 12px}.card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px}
+input,textarea,select,button{width:100%;font:inherit;padding:11px;border-radius:8px;border:1px solid var(--bd);background:#0b1220;color:var(--tx);margin-top:8px}
+button{background:var(--ac);color:#052e16;font-weight:700;border:0;cursor:pointer}button.sec{background:var(--bd);color:var(--tx)}
+.row{display:flex;gap:8px}.row>*{flex:1}label{display:block;margin-top:12px;color:var(--mut);font-size:14px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}.tabs button{width:auto;margin:0;padding:8px 14px;background:var(--bd);color:var(--tx)}.tabs button.on{background:var(--ac);color:#052e16}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{background:var(--bd);padding:6px 10px;border-radius:99px;font-size:13px;cursor:pointer}.chip.on{background:var(--ac);color:#052e16}
+pre{white-space:pre-wrap;font-size:12px;color:var(--mut);max-height:220px;overflow:auto;background:#0b1220;padding:8px;border-radius:8px}
+small{color:var(--mut)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.clip{background:#0b1220;border-radius:8px;overflow:hidden;font-size:12px}.clip img,.clip video{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}
+.clip .i{padding:6px}.clip .a{display:flex;gap:4px;margin-top:4px}.clip .a button{margin:0;padding:5px;font-size:12px}
+.hide{display:none}.bar{height:6px;background:var(--bd);border-radius:3px}.bar i{display:block;height:100%;background:var(--ac);border-radius:3px}
 </style></head><body>
 <h1>🎬 B-Roll Hunter</h1>
+<div class="tabs"><button class="on" data-t="baixar">Baixar</button><button data-t="lib">Biblioteca</button><button data-t="agenda">Agendar</button><button data-t="temas">Temas</button></div>
+
+<section id="baixar">
 <div class="card">
-  <label>Tema</label><input id="theme" placeholder="ex: diabetes">
+  <label>Tema</label><input id="theme" placeholder="ex: diabetes, glicose, sono, articulações…" oninput="showSubs()">
   <div class="chips" id="chips"></div>
-  <label style="display:block;margin-top:12px">Clipes por subcategoria</label><input id="per" type="number" value="5" min="1" max="30">
-  <label style="display:block;margin-top:12px">Links extras (TikTok/Instagram/YouTube), um por linha — opcional</label>
-  <textarea id="urls" rows="3"></textarea>
-  <button onclick="go()">Baixar B-rolls</button>
+  <label>Subcategorias (toque para desmarcar)</label><div class="chips" id="subs"></div>
+  <div class="row"><div><label>Clipes por subcategoria</label><input id="per" type="number" value="5" min="1" max="50"></div>
+  <div><label>Fonte</label><select id="cc"><option value="0">YouTube (tudo)</option><option value="1">Só Creative Commons</option></select></div></div>
+  <label>Links / perfis / canais (TikTok, Instagram, YouTube) — um por linha</label>
+  <textarea id="urls" rows="3" placeholder="https://www.tiktok.com/@perfil"></textarea>
+  <button onclick="go()">🔎 Caçar B-rolls</button>
 </div>
 <div class="card"><b>Tarefas</b><div id="jobs"></div></div>
-<div class="card"><b>Biblioteca</b><div id="lib"></div></div>
+</section>
+
+<section id="lib" class="hide"><div class="card">
+  <input id="sq" placeholder="Busca inteligente: 'mão segurando cápsulas', 'idoso caminhando'…" onkeydown="if(event.key=='Enter')loadLib()">
+  <div class="row"><select id="ft" onchange="loadLib()"><option value="">Todos os temas</option></select>
+  <select id="fo" onchange="loadLib()"><option value="">Qualquer formato</option><option>horizontal</option><option>vertical</option></select></div>
+  <p><small id="stats"></small> · <a style="color:var(--ac)" id="csv" href="#">exportar CSV</a></p>
+  <div class="grid" id="grid"></div></div></section>
+
+<section id="agenda" class="hide"><div class="card">
+  <b>Rodar automaticamente</b>
+  <div class="row"><input id="at" placeholder="tema"><input id="ap" type="number" value="3" title="por subcategoria"><input id="ah" type="number" value="24" title="a cada X horas"></div>
+  <small>tema · clipes por subcategoria · a cada X horas</small>
+  <button onclick="addSched()">Agendar</button><div id="scheds"></div></div></section>
+
+<section id="temas" class="hide"><div class="card">
+  <b>Novo tema personalizado</b>
+  <input id="tn" placeholder="nome (ex: tireoide)"><input id="ta" placeholder="sinônimos separados por vírgula">
+  <textarea id="ts" rows="5" placeholder="subcategoria: busca 1 | busca 2&#10;anatomia: thyroid gland 3d animation | neck anatomy 3d&#10;sintomas: tired woman fatigue | woman touching neck"></textarea>
+  <button onclick="addTheme()">Salvar tema</button></div>
+  <div class="card"><b>Palavras-chave atuais</b><div id="tlist"></div></div></section>
+
 <script>
-let T=localStorage.getItem('tk')||'';
+let T=localStorage.getItem('tk')||'',TH={},off=new Set();
 async function api(p,o={}){o.headers={...(o.headers||{}),'X-Token':T,'Content-Type':'application/json'};
- const r=await fetch(p,o); if(r.status==401){T=prompt('Senha do app:')||'';localStorage.setItem('tk',T);return api(p,o)} return r.json()}
-async function themes(){const t=await api('/api/themes');chips.innerHTML=Object.keys(t).map(k=>`<span class=chip onclick="theme.value='${k}'">${k}</span>`).join('')}
-async function go(){if(!theme.value.trim())return;await api('/api/jobs',{method:'POST',body:JSON.stringify({theme:theme.value,per_sub:+per.value,urls:urls.value.split('\n')})});urls.value='';refresh()}
+ const r=await fetch(p,o);if(r.status==401){T=prompt('Senha do app:')||'';localStorage.setItem('tk',T);return api(p,o)}return r.json()}
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));
+ document.querySelectorAll('section').forEach(s=>s.classList.toggle('hide',s.id!=b.dataset.t));if(b.dataset.t=='lib')loadLib();if(b.dataset.t=='agenda')loadSched()});
+function norm(s){return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim()}
+function match(t){t=norm(t);for(const[k,v]of Object.entries(TH)){if([k,...v.aliases].map(norm).includes(t))return k}
+ for(const[k,v]of Object.entries(TH)){if([k,...v.aliases].map(norm).some(n=>n.includes(t)||t.includes(n)))return k}}
+function showSubs(){const k=match($('theme').value);off.clear();$('subs').innerHTML=k?Object.keys(TH[k].subs).map(s=>`<span class="chip on" onclick="this.classList.toggle('on');off.has('${s}')?off.delete('${s}'):off.add('${s}')">${s}</span>`).join(''):'<small>tema livre: busca direta</small>'}
+async function loadThemes(){TH=await api('/api/themes');
+ $('chips').innerHTML=Object.keys(TH).map(k=>`<span class=chip onclick="theme.value='${k}';showSubs()">${k}</span>`).join('');
+ $('ft').innerHTML='<option value="">Todos os temas</option>'+Object.keys(TH).map(k=>`<option>${k}</option>`).join('');
+ $('tlist').innerHTML=Object.entries(TH).map(([k,v])=>`<details><summary>${k}</summary><small>${Object.entries(v.subs).map(([s,q])=>`<b>${s}</b>: ${q.map(esc).join(' · ')}`).join('<br>')}</small></details>`).join('')}
+async function go(){if(!$('theme').value.trim())return;const k=match($('theme').value);
+ const subs=k?Object.keys(TH[k].subs).filter(s=>!off.has(s)):[];
+ await api('/api/jobs',{method:'POST',body:JSON.stringify({theme:$('theme').value,per_sub:+$('per').value,cc_only:$('cc').value=='1',subs,urls:$('urls').value.split('\n')})});$('urls').value='';refresh()}
 async function refresh(){const j=await api('/api/jobs');
- jobs.innerHTML=j.map(x=>`<p><b>${x.theme}</b> — ${x.status} — ${x.clips_saved} clipes<br><small>${x.subs.join(', ')}</small></p><pre>${x.logs.join('\n')}</pre>`).join('')||'<small>nenhuma</small>';
- const c=await api('/api/catalog');const g={};c.clips.forEach(k=>{const n=k.theme+' / '+k.subcategory;g[n]=(g[n]||0)+1});
- lib.innerHTML='<table>'+Object.entries(g).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')+`</table><small>${c.clips.length} clipes no total</small>`}
-themes();refresh();setInterval(refresh,5000);
+ $('jobs').innerHTML=j.map(x=>`<p><b>${esc(x.theme)}</b> — ${x.status} — ✅ ${x.clips_saved} · 🗑️ ${x.rejected} rejeitados ${x.status=='rodando'||x.status=='na fila'?`<button class=sec style="width:auto;padding:4px 10px" onclick="api('/api/jobs/${x.id}/cancel',{method:'POST'})">parar</button>`:''}<br><small>${x.subs.join(', ')}</small></p><pre>${esc(x.logs.slice(-25).join('\n'))}</pre>`).join('')||'<small>nenhuma</small>'}
+async function loadLib(){const p=new URLSearchParams({theme:$('ft').value,orientation:$('fo').value,q:$('sq').value});
+ const c=await api('/api/catalog?'+p);$('stats').textContent=`${c.total} clipes · ${c.rejected} trechos rejeitados pela curadoria`;
+ $('csv').href='/api/export.csv?token='+encodeURIComponent(T);
+ $('grid').innerHTML=c.clips.map(k=>`<div class=clip id="c${k.id}"><img loading=lazy src="/thumb/${k.id}.jpg" onclick="play(this,'${esc(k.file)}')">
+ <div class=i><b>${esc(k.subcategory)}</b> · ${k.duration}s · ${k.width}x${k.height}<br><small>${esc(Object.values(k.tags||{}).join(' · '))}</small>
+ <div class=bar title="relevância"><i style="width:${Math.min(100,(k.relevance||0)*300)}%"></i></div>
+ <div class=a><button class=sec onclick="star('${k.id}',${k.rating>=5?0:5},this)">${k.rating>=5?'⭐':'☆'}</button><a href="${esc(k.source_url)}" target=_blank><button class=sec>fonte</button></a><button class=sec onclick="del('${k.id}')">🗑️</button></div></div></div>`).join('')}
+function play(img,f){const v=document.createElement('video');v.src='/media/'+f+'?token='+encodeURIComponent(T);v.controls=v.autoplay=v.loop=v.muted=true;v.playsInline=true;img.replaceWith(v)}
+async function del(id){if(!confirm('Apagar este clipe (VPS e Drive)?'))return;await api('/api/clips/'+id,{method:'DELETE'});$('c'+id).remove()}
+async function star(id,s,b){await api(`/api/clips/${id}/rating/${s}`,{method:'POST'});b.textContent=s?'⭐':'☆'}
+async function loadSched(){const s=await api('/api/schedules');$('scheds').innerHTML=s.map(x=>`<p>${esc(x.theme)} · ${x.per_sub}/sub · a cada ${x.every_hours}h <button class=sec style="width:auto;padding:4px 10px" onclick="delSched('${x.id}')">remover</button></p>`).join('')}
+async function addSched(){await api('/api/schedules',{method:'POST',body:JSON.stringify({theme:$('at').value,per_sub:+$('ap').value,every_hours:+$('ah').value})});loadSched()}
+async function delSched(id){await api('/api/schedules/'+id,{method:'DELETE'});loadSched()}
+async function addTheme(){const subs={};$('ts').value.split('\n').forEach(l=>{const[a,b]=l.split(':');if(a&&b)subs[norm(a).replace(/ /g,'_')]=b.split('|').map(s=>s.trim()).filter(Boolean)});
+ if(!$('tn').value||!Object.keys(subs).length)return alert('preencha nome e subcategorias');
+ await api('/api/themes',{method:'POST',body:JSON.stringify({name:$('tn').value,aliases:$('ta').value.split(',').map(s=>s.trim()).filter(Boolean),subs})});loadThemes();alert('Tema salvo!')}
+loadThemes();refresh();setInterval(refresh,5000);
 </script></body></html>
